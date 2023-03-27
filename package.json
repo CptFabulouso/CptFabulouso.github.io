@@ -5,7 +5,7 @@
   "type": "module",
   "license": "MIT",
   "scripts": {
-    "start": "http-server 'src' -c-1"
+    "start": "http-server -c-1"
   },
   "dependencies": {
     "http-server": "^14.1.1",
