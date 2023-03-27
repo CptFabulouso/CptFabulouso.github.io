@@ -1,0 +1,14 @@
+{
+  "name": "surprise",
+  "version": "1.0.0",
+  "main": "index.html",
+  "type": "module",
+  "license": "MIT",
+  "scripts": {
+    "start": "http-server 'src' -c-1"
+  },
+  "dependencies": {
+    "http-server": "^14.1.1",
+    "live-server": "^1.2.2"
+  }
+}
