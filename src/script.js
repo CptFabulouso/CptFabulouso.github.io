@@ -1,11 +1,14 @@
-import { createRoundAbout } from "./roundabout.js"
+import RoundAbout from "./roundabout.js"
+import BouncyText from "./bouncyText.js"
+import WaveText from "./waveText.js"
+import Secret from "./secret.js";
 
 // Add mouse movement and click event listeners
 const FRICTION = 0.007;
 let previousX = 0;
 let angularVelocity = 0;
 let lastVelocities = [];
-let camera, scene, renderer, roundabout, isMouseDown = false;
+let camera, scene, renderer, roundabout, isMouseDown, spinToHell, secret, tadadaText, showSecret, swipeText = false;
 
 function init(){
   // Set up the scene, camera, and renderer
@@ -15,17 +18,57 @@ function init(){
   renderer.shadowMap.enabled = true;
   renderer.setSize(window.innerWidth, window.innerHeight);
   document.body.appendChild(renderer.domElement);
-  roundabout = createRoundAbout(renderer)
-  
+  roundabout = new RoundAbout({ x: 0, y: 0, z: -2 })
+  swipeText = new BouncyText("< Swipe >", { x: 0, y: 3, z: 1 })
+  secret = new Secret()
+  scene.add(secret.secret)
+  swipeText.load((textGeometry) => {
+    scene.add(textGeometry);
+  })
+  tadadaText = new WaveText("Ta Da Ta Da Ta Da", { x: 0, y: 3, z: -10 })
+  tadadaText.load((textGeometry) => {
+    textGeometry.material.transparent = true;
+    textGeometry.material.opacity = 0;
+    scene.add(textGeometry);
+  })
+
   // Create the ground
   const groundGeometry = new THREE.PlaneGeometry(100, 100, 1, 1);
-  const groundMaterial = new THREE.MeshStandardMaterial({ color: 0x808080 });
+  const groundTexture = new THREE.TextureLoader().load("src/textures/grass.jpg");
+  groundTexture.wrapS = THREE.RepeatWrapping;
+  groundTexture.wrapT = THREE.RepeatWrapping;
+  groundTexture.repeat.set(10, 10);
+  const groundMaterial = new THREE.MeshStandardMaterial({ map: groundTexture });
   const ground = new THREE.Mesh(groundGeometry, groundMaterial);
   ground.receiveShadow = true;
   ground.rotation.x = -Math.PI / 2;
   ground.position.y = -1;
   scene.add(ground);
+
+  // create concrete under roundabout
+  const geometry = new THREE.BoxGeometry(5, 0.1, 5);
+  const material = new THREE.MeshBasicMaterial({ color: 0x6a6668 });
+  const cube = new THREE.Mesh(geometry, material);
+  cube.receiveShadow = true
+  cube.position.y = -1;
+  cube.position.z = -2;
+  scene.add(cube);
+
   
+
+  // crate building
+  const buildingGeometry = new THREE.PlaneGeometry(30, 10, 1, 1);
+  const buildingTexture = new THREE.TextureLoader().load("src/textures/building.jpeg");
+  buildingTexture.wrapS = THREE.RepeatWrapping;
+  buildingTexture.wrapT = THREE.RepeatWrapping;
+  buildingTexture.repeat.set(3, 1);
+  const buildingMaterial = new THREE.MeshStandardMaterial({ map: buildingTexture });
+  const building = new THREE.Mesh(buildingGeometry, buildingMaterial);
+  building.receiveShadow = true;
+  // building.rotation.x = -Math.PI / 2;
+  building.position.z = -10;
+  building.position.y = 5;
+  scene.add(building);
   // Load the skybox textures
   // const skyboxTextures = [  'textures/skybox/right.jpg',  'textures/skybox/left.jpg',  'textures/skybox/top.jpg',  'textures/skybox/bottom.jpg',  'textures/skybox/front.jpg',  'textures/skybox/back.jpg',];
   
@@ -40,7 +83,7 @@ function init(){
   
   // Position the camera and roundabout
   camera.position.z = 8;
-  camera.position.y = 1;
+  camera.position.y = 3;
   roundabout.position.y = 0;
   scene.add(roundabout)
   
@@ -66,10 +109,22 @@ function init(){
 // Render the scene
 function animate() {
   requestAnimationFrame(animate);
+  swipeText.update()
+  if(spinToHell){
+    tadadaText.show()
+    tadadaText.update()
+  }
+  if(showSecret){
+    secret.update()
+  }
+  if(tadadaText.textGeometry.position.z > 8 && !showSecret){
+    showSecret = true
+    secret.reveal()
+  }
   if (!isMouseDown && Math.abs(angularVelocity) > 0.001) {
-    angularVelocity *= 1 - FRICTION;
-    // console.log({ angularVelocity })
-
+    if(!spinToHell){
+      angularVelocity *= 1 - FRICTION;
+    }
     roundabout.rotation.y += angularVelocity;
   }
   renderer.render(scene, camera);
@@ -88,7 +143,9 @@ function handleGestureEnd() {
   // angularVelocity = Math.max(angularVelocitySum, noZeros[noZeros.length-1])
   if(Math.abs(angularVelocity) > 0.03){
     // let it spin!
+    spinToHell = true
     angularVelocity = Math.sign(angularVelocity) * 0.3
+    swipeText.hide()
   }
 }
 
@@ -96,7 +153,6 @@ function handleGestureProgress(currentX){
   if (isMouseDown && previousX) {
     const deltaX = currentX - previousX;
     const velocity = deltaX * 0.005
-    console.log({velocity})
     lastVelocities.push(velocity)
     if (lastVelocities.length > 10) {
       lastVelocities.shift();
@@ -119,8 +175,9 @@ function handleTouchMove(event) {
 }
 
 function handleWindowResize(){
-  console.log({window})
-  renderer.setSize(window.innerWidth, window.innerHeight);
+  camera.aspect = window.innerWidth / window.innerHeight;
+  camera.updateProjectionMatrix();
+  renderer.setSize( window.innerWidth, window.innerHeight );
 }
 
 
