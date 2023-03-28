@@ -20,7 +20,7 @@ function init(){
   document.body.appendChild(renderer.domElement);
   roundabout = new RoundAbout({ x: 0, y: 0, z: -2 })
   swipeText = new BouncyText("< Swipe >", { x: 0, y: 3, z: 1 })
-  secret = new Secret()
+  secret = new Secret(camera)
   scene.add(secret.secret)
   swipeText.load((textGeometry) => {
     scene.add(textGeometry);
@@ -53,7 +53,6 @@ function init(){
   cube.position.y = -1;
   cube.position.z = -2;
   scene.add(cube);
-
   
 
   // crate building
@@ -65,21 +64,9 @@ function init(){
   const buildingMaterial = new THREE.MeshStandardMaterial({ map: buildingTexture });
   const building = new THREE.Mesh(buildingGeometry, buildingMaterial);
   building.receiveShadow = true;
-  // building.rotation.x = -Math.PI / 2;
   building.position.z = -10;
   building.position.y = 5;
   scene.add(building);
-  // Load the skybox textures
-  // const skyboxTextures = [  'textures/skybox/right.jpg',  'textures/skybox/left.jpg',  'textures/skybox/top.jpg',  'textures/skybox/bottom.jpg',  'textures/skybox/front.jpg',  'textures/skybox/back.jpg',];
-  
-  // Create the skybox
-  // const skyboxGeometry = new THREE.BoxGeometry(1000, 1000, 1000);
-  // const skyboxMaterials = skyboxTextures.map((texture) => new THREE.MeshStandardMaterial({
-  //   map: new THREE.TextureLoader().load(texture),
-  //   side: THREE.BackSide,
-  // }));
-  // const skybox = new THREE.Mesh(skyboxGeometry, skyboxMaterials);
-  // scene.add(skybox);
   
   // Position the camera and roundabout
   camera.position.z = 8;
@@ -117,7 +104,7 @@ function animate() {
   if(showSecret){
     secret.update()
   }
-  if(tadadaText.textGeometry.position.z > 8 && !showSecret){
+  if(tadadaText?.textGeometry?.position.z > 8 && !showSecret){
     showSecret = true
     secret.reveal()
   }
@@ -179,7 +166,6 @@ function handleWindowResize(){
   camera.updateProjectionMatrix();
   renderer.setSize( window.innerWidth, window.innerHeight );
 }
-
 
 init();
 animate();
