@@ -12,9 +12,8 @@ const visibleHeightAtZDepth = ( depth, camera ) => {
 };
 
 const visibleWidthAtZDepth = ( depth, camera ) => {
-  const height = visibleHeightAtZDepth( depth, camera );
-  console.log({cameraAspect: camera.aspect, wAspect: window.innerWidth / window.innerHeight})
-  return height * camera.aspect;
+  // const height = visibleHeightAtZDepth( depth, camera );
+  // return height * camera.aspect;
 };
 
 
@@ -42,17 +41,14 @@ export default class Secret {
   }
 
   setScale(){
-    const visibleHeight = visibleHeightAtZDepth(7, this.camera)
-    const visibleWidth = visibleWidthAtZDepth(7, this.camera)
-    const size = Math.min(visibleHeight, visibleWidth)
-    console.log({visibleHeight, visibleWidth, size})
-    this.secret.geometry.scale.x = size
-    this.secret.geometry.scale.y = size
+    const aspect = window.innerWidth/ window.innerHeight
+    const size = Math.min(aspect, 1) * 0.15
+    this.secret.scale.x = size
+    this.secret.scale.y = size
     
   }
 
   reveal(){
-    // this.setScale()
     this.isShowing = true
     this.secret.material.opacity = 1;
   }
@@ -62,11 +58,10 @@ export default class Secret {
       return
     }
 
-    const aspectRatio = window.innerWidth / window.innerHeight
-    console.log({aspectRatio})
-    if(this.secret.position.z > 7){
-      this.secret.position.z = 7
+    if(this.secret.position.z > 7.9){
+      this.secret.position.z = 7.9
       this.isShowing = false
+      return
     }
     this.secret.position.z += 0.3
   }

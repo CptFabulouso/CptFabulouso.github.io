@@ -8,15 +8,36 @@ const FRICTION = 0.007;
 let previousX = 0;
 let angularVelocity = 0;
 let lastVelocities = [];
-let camera, scene, renderer, roundabout, isMouseDown, spinToHell, secret, tadadaText, showSecret, swipeText = false;
+let camera, scene, renderer, roundabout, isMouseDown, clock, spinToHell, secret, tadadaText, showSecret, swipeText = false;
+
+function getWindowDims(){
+  const w = window.innerWidth
+  const h = window.innerHeight
+  // if(w < h){
+  //   return {
+  //     width: w,
+  //     height: w,
+  //     aspect: 1
+  //   }
+  // }
+  return {
+    width: w,
+    height: h,
+    aspect: w/h
+  }
+}
 
 function init(){
   // Set up the scene, camera, and renderer
+  clock = new THREE.Clock();
   scene = new THREE.Scene();
-  camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
+  const windowDims = getWindowDims()
+  camera = new THREE.PerspectiveCamera(75, windowDims.aspect, 0.1, 1000);
   renderer = new THREE.WebGLRenderer();
   renderer.shadowMap.enabled = true;
-  renderer.setSize(window.innerWidth, window.innerHeight);
+  renderer.shadowMap.renderReverseSided = false;
+  renderer.shadowMap.renderSingleSided = false;
+  renderer.setSize(windowDims.width, windowDims.height);
   document.body.appendChild(renderer.domElement);
   roundabout = new RoundAbout({ x: 0, y: 0, z: -2 })
   swipeText = new BouncyText("< Swipe >", { x: 0, y: 3, z: 1 })
@@ -47,9 +68,10 @@ function init(){
 
   // create concrete under roundabout
   const geometry = new THREE.BoxGeometry(5, 0.1, 5);
-  const material = new THREE.MeshBasicMaterial({ color: 0x6a6668 });
+  const material = new THREE.MeshStandardMaterial({ color: 0x6a6668 });
   const cube = new THREE.Mesh(geometry, material);
   cube.receiveShadow = true
+  cube.castShadow = true
   cube.position.y = -1;
   cube.position.z = -2;
   scene.add(cube);
@@ -126,8 +148,9 @@ function handleGestureEnd() {
   isMouseDown = false;
   const noZeros = lastVelocities.filter(v => !!v)
   // const angularVelocitySum = noZeros.reduce((a, b) => a + b, 0) / noZeros.length;
-  angularVelocity = lastVelocities.reduce((a, b) => Math.abs(a) > Math.abs(b)? a : b, 0);
+  // angularVelocity = lastVelocities.reduce((a, b) => Math.abs(a) > Math.abs(b)? a : b, 0);
   // angularVelocity = Math.max(angularVelocitySum, noZeros[noZeros.length-1])
+  angularVelocity = noZeros[noZeros.length-1]
   if(Math.abs(angularVelocity) > 0.03){
     // let it spin!
     spinToHell = true
@@ -155,16 +178,15 @@ function handleMouseMove(event) {
 
 function handleTouchMove(event) {
   handleGestureProgress(event.touches[0].clientX)
-  // if (mouseDown) {
-  //   // rotate the cube based on touch movement
-  //   cube.rotation.y += event.touches[0].movementX / 100;
-  // }
 }
 
 function handleWindowResize(){
-  camera.aspect = window.innerWidth / window.innerHeight;
+  const windowDims = getWindowDims()
+
+  camera.aspect = windowDims.aspect;
   camera.updateProjectionMatrix();
-  renderer.setSize( window.innerWidth, window.innerHeight );
+  renderer.setSize( windowDims.width, windowDims.height );
+  secret.setScale()
 }
 
 init();
