@@ -24,17 +24,18 @@ export default class Secret {
   visibleHeight
   visibleWidth
   camera
+  speed = 15
 
   constructor(camera){
     this.camera = camera
     const secretGeometry =  new THREE.PlaneGeometry(1, 1, 1, 1);
-    const secretTexture =  new THREE.TextureLoader().load("src/textures/building.jpeg");
-    const secretMaterial = new THREE.MeshStandardMaterial({ map: secretTexture });
+    const secretTexture =  new THREE.TextureLoader().load("src/textures/secret.jpeg");
+    const secretMaterial = new THREE.MeshBasicMaterial({ map: secretTexture });
     this.secret = new THREE.Mesh(secretGeometry, secretMaterial);
 
     this.secret.material.transparent = true;
     this.secret.material.opacity = 0;
-    this.secret.position.z = -10;
+    this.secret.position.z = -6;
     this.secret.position.y = 3;
     
     this.setScale()
@@ -53,7 +54,7 @@ export default class Secret {
     this.secret.material.opacity = 1;
   }
 
-  update() {
+  update(deltaTime) {
     if(!this.secret || !this.isShowing){
       return
     }
@@ -63,7 +64,7 @@ export default class Secret {
       this.isShowing = false
       return
     }
-    this.secret.position.z += 0.3
+    this.secret.position.z += this.speed * deltaTime
   }
 
 }

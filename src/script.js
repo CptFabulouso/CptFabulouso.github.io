@@ -1,14 +1,17 @@
+import { FontLoader } from 'three/addons/loaders/FontLoader.js';
+import { TextGeometry } from 'three/addons/geometries/TextGeometry.js';
 import RoundAbout from "./roundabout.js"
 import BouncyText from "./bouncyText.js"
 import WaveText from "./waveText.js"
 import Secret from "./secret.js";
+import Timer from './Timer.js';
 
 // Add mouse movement and click event listeners
 const FRICTION = 0.007;
 let previousX = 0;
 let angularVelocity = 0;
 let lastVelocities = [];
-let camera, scene, renderer, roundabout, isMouseDown, clock, spinToHell, secret, tadadaText, showSecret, swipeText = false;
+let camera, scene, renderer, timer, roundabout, isMouseDown, loaded, clock, swipeMoreText, spinToHell, secret, tadadaText, showSecret, swipeText = false;
 
 function getWindowDims(){
   const w = window.innerWidth
@@ -40,17 +43,38 @@ function init(){
   renderer.setSize(windowDims.width, windowDims.height);
   document.body.appendChild(renderer.domElement);
   roundabout = new RoundAbout({ x: 0, y: 0, z: -2 })
-  swipeText = new BouncyText("< Swipe >", { x: 0, y: 3, z: 1 })
   secret = new Secret(camera)
   scene.add(secret.secret)
-  swipeText.load((textGeometry) => {
-    scene.add(textGeometry);
-  })
-  tadadaText = new WaveText("Ta Da Ta Da Ta Da", { x: 0, y: 3, z: -10 })
-  tadadaText.load((textGeometry) => {
-    textGeometry.material.transparent = true;
-    textGeometry.material.opacity = 0;
-    scene.add(textGeometry);
+  const loader = new FontLoader();
+  loader.load('https://cdn.jsdelivr.net/npm/3dgraph@1.1.0/helvetiker.typeface.json', (font) => {
+    swipeText = new BouncyText(font, "< Swipe >", { x: 0, y: 3, z: 1 })
+    scene.add(swipeText.textGeometry);
+    tadadaText = new WaveText(font, "Ta Da Ta Da Ta Da", { x: 0, y: 3, z: -10 })
+    tadadaText.textGeometry.material.transparent = true;
+    tadadaText.textGeometry.material.opacity = 0;
+    scene.add(tadadaText.textGeometry);
+
+    const swipeMoreGeometry = new TextGeometry("Swipe moooore", {
+      font: font,
+      size: 0.6,
+      height: 0.1,
+      curveSegments: 12,
+      bevelEnabled: true,
+      bevelThickness: 0.01,
+      bevelSize: 0.02,
+      bevelSegments: 5
+    });
+    swipeMoreGeometry.center()
+    const swipeMoreMaterial = new THREE.MeshPhongMaterial({ color: 0xffffff });
+    swipeMoreText = new THREE.Mesh(swipeMoreGeometry, swipeMoreMaterial);
+    swipeMoreText.position.x = 0
+    swipeMoreText.position.y = 1
+    swipeMoreText.position.z = 1
+    swipeMoreText.material.transparent = true;
+    swipeMoreText.material.opacity = 0;
+    scene.add(swipeMoreText);
+
+    loaded = true
   })
 
   // Create the ground
@@ -78,7 +102,7 @@ function init(){
   
 
   // crate building
-  const buildingGeometry = new THREE.PlaneGeometry(30, 10, 1, 1);
+  const buildingGeometry = new THREE.PlaneGeometry(30, 15, 1, 1);
   const buildingTexture = new THREE.TextureLoader().load("src/textures/building.jpeg");
   buildingTexture.wrapS = THREE.RepeatWrapping;
   buildingTexture.wrapT = THREE.RepeatWrapping;
@@ -87,7 +111,7 @@ function init(){
   const building = new THREE.Mesh(buildingGeometry, buildingMaterial);
   building.receiveShadow = true;
   building.position.z = -10;
-  building.position.y = 5;
+  building.position.y = 7;
   scene.add(building);
   
   // Position the camera and roundabout
@@ -113,33 +137,45 @@ function init(){
 
   // add window resize listener
   window.addEventListener('resize', handleWindowResize);
+
+  timer = new Timer(1/60);
+  animate();
 }
 
 // Render the scene
 function animate() {
-  requestAnimationFrame(animate);
-  swipeText.update()
-  if(spinToHell){
-    tadadaText.show()
-    tadadaText.update()
-  }
-  if(showSecret){
-    secret.update()
-  }
-  if(tadadaText?.textGeometry?.position.z > 8 && !showSecret){
-    showSecret = true
-    secret.reveal()
-  }
-  if (!isMouseDown && Math.abs(angularVelocity) > 0.001) {
-    if(!spinToHell){
-      angularVelocity *= 1 - FRICTION;
+  timer.update = function update(deltaTime) {
+    if(!loaded){
+      return
     }
-    roundabout.rotation.y += angularVelocity;
+      swipeText.update(deltaTime)
+      if(spinToHell){
+        tadadaText.show()
+        tadadaText.update(deltaTime)
+      }
+      if(showSecret){
+        secret.update(deltaTime)
+      }
+      if(tadadaText?.textGeometry?.position.z > 8 && !showSecret){
+        showSecret = true
+        secret.reveal()
+      }
+      if (!isMouseDown && Math.abs(angularVelocity) > 0.001) {
+        if(!spinToHell){
+          angularVelocity *= 1 - FRICTION;
+        }
+        roundabout.rotation.y += angularVelocity;
+      }
+      renderer.render(scene, camera);
   }
-  renderer.render(scene, camera);
+
+  timer.start();
 }
 
 function handleGestureStart() {
+  if(spinToHell){
+    return
+  }
   lastVelocities = []
   isMouseDown = true;
   angularVelocity = 0;
@@ -147,19 +183,25 @@ function handleGestureStart() {
 function handleGestureEnd() {
   isMouseDown = false;
   const noZeros = lastVelocities.filter(v => !!v)
-  // const angularVelocitySum = noZeros.reduce((a, b) => a + b, 0) / noZeros.length;
-  // angularVelocity = lastVelocities.reduce((a, b) => Math.abs(a) > Math.abs(b)? a : b, 0);
+  // const angularVelocity = noZeros.reduce((a, b) => a + b, 0) / noZeros.length;
+  angularVelocity = lastVelocities.reduce((a, b) => Math.abs(a) > Math.abs(b)? a : b, 0);
   // angularVelocity = Math.max(angularVelocitySum, noZeros[noZeros.length-1])
-  angularVelocity = noZeros[noZeros.length-1]
+  // angularVelocity = noZeros[noZeros.length-1]
   if(Math.abs(angularVelocity) > 0.03){
     // let it spin!
     spinToHell = true
+    swipeMoreText.material.opacity = 0
     angularVelocity = Math.sign(angularVelocity) * 0.3
     swipeText.hide()
+  } else {
+    swipeMoreText.material.opacity = 1
   }
 }
 
 function handleGestureProgress(currentX){
+  if(spinToHell){
+    return
+  }
   if (isMouseDown && previousX) {
     const deltaX = currentX - previousX;
     const velocity = deltaX * 0.005
@@ -190,4 +232,3 @@ function handleWindowResize(){
 }
 
 init();
-animate();
