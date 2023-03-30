@@ -30,7 +30,13 @@ function getWindowDims(){
   }
 }
 
+function preventDefault(e){
+  e.preventDefault();
+}
+
 function init(){
+  document.body.addEventListener('touchmove', preventDefault, { passive: false });
+
   // Set up the scene, camera, and renderer
   clock = new THREE.Clock();
   scene = new THREE.Scene();
