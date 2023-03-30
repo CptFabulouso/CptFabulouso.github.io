@@ -204,7 +204,7 @@ function handleGestureProgress(currentX){
   }
   if (isMouseDown && previousX) {
     const deltaX = currentX - previousX;
-    const velocity = deltaX * 0.005
+    const velocity = deltaX * (getWindowDims().width / 200000)
     lastVelocities.push(velocity)
     if (lastVelocities.length > 10) {
       lastVelocities.shift();
