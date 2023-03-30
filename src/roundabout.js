@@ -23,14 +23,24 @@ export default class RoundAbout {
     const seatsPoleGeometry = new THREE.CylinderGeometry(poleWidth/2, poleWidth/2, height-seatsHeight - poleWidth/2, 32);
     const seatsPole = new THREE.Mesh(seatsPoleGeometry, poleMaterial);
     const seatsPole2 = new THREE.Mesh(seatsPoleGeometry, poleMaterial);
+    const seatsPole3 = new THREE.Mesh(seatsPoleGeometry, poleMaterial);
+    const seatsPole4 = new THREE.Mesh(seatsPoleGeometry, poleMaterial);
     seatsPole.position.set(-topCircleRadius+0.7, seatsHeight + (height-seatsHeight)/2 - poleWidth/2, 0);
     seatsPole.castShadow = true;
     seatsPole.receiveShadow = true;
     seatsPole2.position.set(topCircleRadius-0.7, seatsHeight + (height-seatsHeight)/2- poleWidth/2, 0);
     seatsPole2.castShadow = true;
     seatsPole2.receiveShadow = true;
+    seatsPole3.position.set(0, seatsHeight + (height-seatsHeight)/2- poleWidth/2, topCircleRadius-0.7);
+    seatsPole3.castShadow = true;
+    seatsPole3.receiveShadow = true;
+    seatsPole4.position.set(0, seatsHeight + (height-seatsHeight)/2- poleWidth/2, -topCircleRadius+0.7);
+    seatsPole4.castShadow = true;
+    seatsPole4.receiveShadow = true;
     roundabout.add(seatsPole);
     roundabout.add(seatsPole2);
+    roundabout.add(seatsPole3);
+    roundabout.add(seatsPole4);
 
     const topBarGeometry = new THREE.CylinderGeometry(0.05, 0.05, topCircleRadius*2, 32);
     const topBar = new THREE.Mesh(topBarGeometry, poleMaterial);

@@ -197,7 +197,7 @@ function handleGestureEnd() {
     // let it spin!
     spinToHell = true
     swipeMoreText.material.opacity = 0
-    angularVelocity = Math.sign(angularVelocity) * 0.3
+    angularVelocity = Math.sign(angularVelocity) * 0.15
     swipeText.hide()
   } else {
     swipeMoreText.material.opacity = 1
