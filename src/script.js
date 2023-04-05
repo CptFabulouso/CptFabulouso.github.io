@@ -11,7 +11,7 @@ const FRICTION = 0.007;
 let previousX = 0;
 let angularVelocity = 0;
 let lastVelocities = [];
-let camera, scene, renderer, timer, roundabout, isMouseDown, loaded, clock, swipeMoreText, spinToHell, secret, tadadaText, showSecret, swipeText = false;
+let camera, scene, renderer, timer, roundabout, isMouseDown, loaded, swipeClock, swipeMoreText, spinToHell, secret, tadadaText, showSecret, swipeText = false;
 
 function getWindowDims(){
   const w = window.innerWidth
@@ -38,7 +38,7 @@ function init(){
   document.body.addEventListener('touchmove', preventDefault, { passive: false });
 
   // Set up the scene, camera, and renderer
-  clock = new THREE.Clock();
+  swipeClock = new THREE.Clock();
   scene = new THREE.Scene();
   const windowDims = getWindowDims()
   camera = new THREE.PerspectiveCamera(75, windowDims.aspect, 0.1, 1000);
@@ -170,7 +170,7 @@ function animate() {
         if(!spinToHell){
           angularVelocity *= 1 - FRICTION;
         }
-        roundabout.rotation.y += angularVelocity;
+        roundabout.rotation.y += angularVelocity * deltaTime;
       }
       renderer.render(scene, camera);
   }
@@ -182,22 +182,27 @@ function handleGestureStart() {
   if(spinToHell){
     return
   }
+  swipeClock.start();
   lastVelocities = []
   isMouseDown = true;
   angularVelocity = 0;
 }
+
 function handleGestureEnd() {
   isMouseDown = false;
+  swipeClock.stop();
   const noZeros = lastVelocities.filter(v => !!v)
-  // const angularVelocity = noZeros.reduce((a, b) => a + b, 0) / noZeros.length;
-  angularVelocity = lastVelocities.reduce((a, b) => Math.abs(a) > Math.abs(b)? a : b, 0);
+  angularVelocity = noZeros.reduce((a, b) => a + b, 0) / noZeros.length;
+  console.log(angularVelocity)
+  // angularVelocity = lastVelocities.reduce((a, b) => Math.abs(a) > Math.abs(b)? a : b, 0);
   // angularVelocity = Math.max(angularVelocitySum, noZeros[noZeros.length-1])
   // angularVelocity = noZeros[noZeros.length-1]
-  if(Math.abs(angularVelocity) > 0.03){
+
+  if(Math.abs(angularVelocity) > 10){
     // let it spin!
     spinToHell = true
     swipeMoreText.material.opacity = 0
-    angularVelocity = Math.sign(angularVelocity) * 0.15
+    angularVelocity = Math.sign(angularVelocity) * Math.min(13, Math.abs(angularVelocity))
     swipeText.hide()
   } else {
     swipeMoreText.material.opacity = 1
@@ -209,9 +214,11 @@ function handleGestureProgress(currentX){
     return
   }
   if (isMouseDown && previousX) {
+    const deltaTime = swipeClock.getDelta();
     const deltaX = currentX - previousX;
     const velocity = deltaX * (getWindowDims().width / 200000)
-    lastVelocities.push(velocity)
+    const recalculatedVelocity = deltaTime === 0? 0: velocity / deltaTime
+    lastVelocities.push(recalculatedVelocity)
     if (lastVelocities.length > 10) {
       lastVelocities.shift();
     }
